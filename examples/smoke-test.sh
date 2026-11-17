@@ -51,18 +51,34 @@ cleanup() {
 }
 trap cleanup EXIT
 
+echo "checking template $TEMPLATE"
+if ! response=$(api_curl "$API_BASE/v1/templates/$TEMPLATE" 2>&1); then
+	echo "template '$TEMPLATE' is not available to this workspace:" >&2
+	printf '%s\n' "$response" >&2
+	echo "register it first; see README step 1" >&2
+	exit 1
+fi
+
 echo "creating a $TEMPLATE instance in $REGION"
-created=$(api_curl -X POST "$API_BASE/v1/instances" \
+if ! created=$(api_curl -X POST "$API_BASE/v1/instances" \
 	-H 'Content-Type: application/json' \
 	-d "$(jq -cn --arg template "$TEMPLATE" --arg region "$REGION" \
-		'{template: $template, region: $region}')")
+		'{template: $template, region: $region}')" 2>&1); then
+	echo "create failed:" >&2
+	printf '%s\n' "$created" >&2
+	exit 1
+fi
 INSTANCE_ID=$(printf '%s' "$created" | jq -er '.id')
 echo "instance: $INSTANCE_ID"
 
 echo "running a command"
-result=$(instance_curl -X POST "$EXEC_BASE/v1/instances/$INSTANCE_ID/exec" \
+if ! result=$(instance_curl -X POST "$EXEC_BASE/v1/instances/$INSTANCE_ID/exec" \
 	-H 'Content-Type: application/json' \
-	-d '{"command": "uname -s && echo agent37-smoke-test"}')
+	-d '{"command": "uname -s && echo agent37-smoke-test"}' 2>&1); then
+	echo "exec failed:" >&2
+	printf '%s\n' "$result" >&2
+	exit 1
+fi
 printf '%s' "$result" | jq -r '.stdout' | sed 's/^/  /'
 [ "$(printf '%s' "$result" | jq -r '.exit_code')" = 0 ] || {
 	echo "command failed" >&2
@@ -79,14 +95,17 @@ instance_curl -X POST "$EXEC_BASE/v1/instances/$INSTANCE_ID/exec" \
 url="https://$INSTANCE_ID-$PORT.agent37.app"
 echo "fetching $url"
 body=''
+last_error=''
 for _ in 1 2 3 4 5 6 7 8 9 10; do
-	if body=$(instance_curl "$url" 2>/dev/null); then
+	if body=$(instance_curl "$url" 2>&1); then
 		break
 	fi
+	last_error=$body
+	body=''
 	sleep 1
 done
 [ -n "$body" ] || {
-	echo "the service did not answer at $url" >&2
+	echo "the service did not answer at $url: $last_error" >&2
 	exit 1
 }
 echo "  $body"

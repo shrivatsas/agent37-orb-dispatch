@@ -66,7 +66,8 @@ remaining() {
 
 request() { # method url auth [data]
 	local method=$1 url=$2 auth=$3 data=${4-}
-	local args=(-sS -o "$BODY" -w '%{http_code}' -X "$method" "$url" -H "$auth" --max-time "$API_TIMEOUT")
+	# --http1.1: some networks break HTTP/2 on Agent37's edge.
+	local args=(-sS --http1.1 -o "$BODY" -w '%{http_code}' -X "$method" "$url" -H "$auth" --max-time "$API_TIMEOUT")
 	[ -n "$data" ] && args+=(-H 'Content-Type: application/json' --data "$data")
 	if ! HTTP_STATUS=$(curl "${args[@]}" 2>"$CURL_ERR"); then
 		HTTP_STATUS=000

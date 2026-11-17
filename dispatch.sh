@@ -273,11 +273,17 @@ bootstrap_command() {
 	local cmd
 	cmd="export HOME=/home/user
 export USER=user
+export PATH=/home/user/.local/bin:/usr/local/bin:\$PATH
 export ORB_TOKEN=$(shell_quote "$ORB_TOKEN")"
 	if [ -n "${AMP_URL:-}" ]; then
 		cmd="$cmd
 export AMP_URL=$(shell_quote "$AMP_URL")"
 	fi
+	cmd="$cmd
+if ! command -v amp >/dev/null 2>&1; then
+  echo \"amp not found in PATH=\$PATH\" >&2
+  exit 127
+fi"
 	printf '%s\nexec amp orb bootstrap > %s 2>&1' "$cmd" "$(shell_quote "$BOOTSTRAP_LOG")"
 }
 

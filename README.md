@@ -57,7 +57,21 @@ Registration copies the image into Agent37's private storage and pins it by dige
 push to the tag does not change this template. Re-register, or `PATCH /v1/templates/amp-orb`,
 to move it forward.
 
-## 2. Install
+## 2. Create the provider and install
+
+Create the provider from the CLI on the host that will run it:
+
+```bash
+amp orb provider create <name>              # personal
+amp orb provider create --workspace <name>  # workspace
+```
+
+That saves the provider token for this user, so the env file needs only the Agent37 key and
+template. If you prefer the web UI, use **Settings → Orbs → Add Provider** (personal) or
+**Workspace Settings → Orbs → Add Orb Provider**, then paste the `aop_live_…` token into
+`AMP_ORB_PROVIDER_TOKEN` in the env file.
+
+Then install:
 
 ```bash
 git clone https://github.com/shrivatsas/agent37-orb-dispatch.git

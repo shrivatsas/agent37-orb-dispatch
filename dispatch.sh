@@ -282,7 +282,11 @@ export AMP_URL=$(shell_quote "$AMP_URL")"
 	cmd="$cmd
 exec > $(shell_quote "$BOOTSTRAP_LOG") 2>&1
 if ! command -v amp >/dev/null 2>&1; then
-  echo \"amp not found in PATH=\$PATH\"
+  echo \"amp not found; installing the Amp CLI\"
+  curl -fsSL https://ampcode.com/install.sh | bash
+fi
+if ! command -v amp >/dev/null 2>&1; then
+  echo \"amp still not found after install; PATH=\$PATH\"
   exit 127
 fi
 exec amp orb bootstrap"

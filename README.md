@@ -128,6 +128,10 @@ AGENT37_API_KEY=sk_live_... AGENT37_TEMPLATE=amp-orb ./examples/smoke-test.sh
 
 ## Notes
 
+- **CLI install.** The official orb image ships `/usr/local/bin/amp` as a symlink to
+  `~/.amp/bin/amp`, which is installed at runtime. The dispatch script installs the Amp CLI on
+  the first spawn if it is missing; the instance disk keeps it, so later spawns skip the
+  download.
 - **Disk, not snapshots.** Agent37's `stop` keeps the instance's disk, so `pause` does not save
   a snapshot and `ORB_SNAPSHOT_ID` is ignored. The instance keeps its id, so a later spawn
   starts the same machine.

@@ -11,6 +11,13 @@ set -euo pipefail
 
 : "${AGENT37_API_KEY:?set AGENT37_API_KEY to a server-side Agent37 key}"
 
+case "$AGENT37_API_KEY" in
+*[[:space:]]* | *'"'* | *'\'*)
+	echo "AGENT37_API_KEY must not contain whitespace, quotes, or backslashes" >&2
+	exit 1
+	;;
+esac
+
 TEMPLATE=${AGENT37_TEMPLATE:-agent37-base}
 REGION=${AGENT37_REGION:-us}
 PORT=${AGENT37_PORT:-8000}
@@ -25,14 +32,13 @@ command -v curl >/dev/null 2>&1 || { echo "curl is required" >&2; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
 
 # Keep the key out of curl's argv, where another local user could read it.
-# --http1.1 avoids HTTP/2 framing errors through some proxies and edge paths.
 api_curl() {
-	curl --fail-with-body -sS --http1.1 \
+	curl --fail-with-body -sS \
 		--config <(printf 'header = "Authorization: Bearer %s"\n' "$AGENT37_API_KEY") "$@"
 }
 
 instance_curl() {
-	curl --fail-with-body -sS --http1.1 \
+	curl --fail-with-body -sS \
 		--config <(printf 'header = "X-Agent37-Key: %s"\n' "$AGENT37_API_KEY") "$@"
 }
 

@@ -25,13 +25,14 @@ command -v curl >/dev/null 2>&1 || { echo "curl is required" >&2; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
 
 # Keep the key out of curl's argv, where another local user could read it.
+# --http1.1 avoids HTTP/2 framing errors through some proxies and edge paths.
 api_curl() {
-	curl --fail-with-body -sS \
+	curl --fail-with-body -sS --http1.1 \
 		--config <(printf 'header = "Authorization: Bearer %s"\n' "$AGENT37_API_KEY") "$@"
 }
 
 instance_curl() {
-	curl --fail-with-body -sS \
+	curl --fail-with-body -sS --http1.1 \
 		--config <(printf 'header = "X-Agent37-Key: %s"\n' "$AGENT37_API_KEY") "$@"
 }
 
@@ -63,9 +64,11 @@ echo "creating a $TEMPLATE instance in $REGION"
 if ! created=$(api_curl -X POST "$API_BASE/v1/instances" \
 	-H 'Content-Type: application/json' \
 	-d "$(jq -cn --arg template "$TEMPLATE" --arg region "$REGION" \
-		'{template: $template, region: $region}')" 2>&1); then
+		'{template: $template, region: $region, name: "agent37-smoke-test", metadata: {purpose: "agent37-smoke-test"}}')" 2>&1); then
 	echo "create failed:" >&2
 	printf '%s\n' "$created" >&2
+	echo "if the instance was created but the response was lost, find it with:" >&2
+	echo "  curl -sS \"$API_BASE/v1/instances\" -H \"Authorization: Bearer \$AGENT37_API_KEY\" | jq '.data[] | select(.metadata.purpose == \"agent37-smoke-test\") | {id, status, created}'" >&2
 	exit 1
 fi
 INSTANCE_ID=$(printf '%s' "$created" | jq -er '.id')

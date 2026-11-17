@@ -280,11 +280,13 @@ export ORB_TOKEN=$(shell_quote "$ORB_TOKEN")"
 export AMP_URL=$(shell_quote "$AMP_URL")"
 	fi
 	cmd="$cmd
+exec > $(shell_quote "$BOOTSTRAP_LOG") 2>&1
 if ! command -v amp >/dev/null 2>&1; then
-  echo \"amp not found in PATH=\$PATH\" >&2
+  echo \"amp not found in PATH=\$PATH\"
   exit 127
-fi"
-	printf '%s\nexec amp orb bootstrap > %s 2>&1' "$cmd" "$(shell_quote "$BOOTSTRAP_LOG")"
+fi
+exec amp orb bootstrap"
+	printf '%s' "$cmd"
 }
 
 start_bootstrap() {

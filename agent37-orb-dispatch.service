@@ -1,0 +1,15 @@
+[Unit]
+Description=Amp self-hosted orb dispatch on Agent37
+Documentation=https://ampcode.com/docs/orbs/self-hosted
+
+[Service]
+Type=simple
+EnvironmentFile=%E/agent37-orb-dispatch/env
+ExecStart=%h/.local/bin/amp orb provider %h/.local/share/agent37-orb-dispatch/dispatch.sh
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target

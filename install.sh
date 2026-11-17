@@ -8,6 +8,7 @@ CONFIG_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/agent37-orb-dispatch
 DATA_DIR=$HOME/.local/share/agent37-orb-dispatch
 UNIT_DIR=$HOME/.config/systemd/user
 ACTION=${1:-install}
+USER_NAME=$(id -un)
 
 need() {
 	command -v "$1" >/dev/null 2>&1 || {
@@ -55,6 +56,14 @@ fi
 install -m 755 "$HERE/dispatch.sh" "$DATA_DIR/dispatch.sh"
 install -m 644 "$HERE/$UNIT" "$UNIT_DIR/$UNIT"
 systemctl --user daemon-reload
+
+# Keep the user service running after logout; without linger it stops with the session.
+if command -v loginctl >/dev/null 2>&1; then
+	if [ "$(loginctl show-user "$USER_NAME" -p Linger --value 2>/dev/null || true)" != yes ]; then
+		loginctl enable-linger "$USER_NAME" 2>/dev/null ||
+			echo "warning: could not enable linger; the service stops when you log out" >&2
+	fi
+fi
 
 if grep -q 'REPLACE_WITH' "$CONFIG_DIR/env"; then
 	echo

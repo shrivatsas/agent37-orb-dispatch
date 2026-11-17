@@ -66,7 +66,9 @@ cd agent37-orb-dispatch
 ```
 
 `install.sh` writes `~/.config/agent37-orb-dispatch/env` (mode `0600`) and installs the systemd
-user unit. Fill in the two tokens, then start it:
+user unit. It also enables `loginctl` linger when it can, so the provider keeps running after you
+log out; if it warns, run `sudo loginctl enable-linger $USER`. Fill in the two tokens, then start
+it:
 
 ```bash
 $EDITOR ~/.config/agent37-orb-dispatch/env

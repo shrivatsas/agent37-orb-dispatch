@@ -282,8 +282,13 @@ export AMP_URL=$(shell_quote "$AMP_URL")"
 }
 
 start_bootstrap() {
-	local id=$1 body pid
-	body=$(jq -cn --arg command "$(bootstrap_command)" --arg name "amp-bootstrap-$ORB_ID" \
+	local id=$1 body pid cmd digest name
+	cmd=$(bootstrap_command)
+	# Agent37 remembers an exec name for 5 minutes; a new ORB_TOKEN changes the
+	# command, so hash the command into the name instead of reusing one.
+	digest=$(printf '%s' "$cmd" | cksum | cut -d' ' -f1)
+	name="amp-bootstrap-$ORB_ID-$digest"
+	body=$(jq -cn --arg command "$cmd" --arg name "$name" \
 		'{command: $command, background: true, name: $name}')
 	call "start bootstrap on $id" exec_api "$id" "$body"
 	pid=$(jq -r '.pid // empty' "$BODY")
